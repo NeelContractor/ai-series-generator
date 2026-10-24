@@ -1,0 +1,28 @@
+{
+  "name": "@repo/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.d.ts"
+  },
+  "scripts": {
+    "generate": "bun run export:openapi && openapi-typescript openapi.json -o src/schema.d.ts",
+    "export:openapi": "uv run --project ../../apps/api python ../../apps/api/scripts/export_openapi.py",
+    "lint": "eslint . --max-warnings 0",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.17.0"
+  },
+  "devDependencies": {
+    "@babel/core": "8.0.1",
+    "@babel/preset-typescript": "8.0.1",
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*",
+    "eslint": "10.9.1",
+    "openapi-typescript": "^7.13.0",
+    "typescript": "5.9.3"
+  }
+}

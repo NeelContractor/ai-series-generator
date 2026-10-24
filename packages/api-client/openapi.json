@@ -1,0 +1,3524 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AI Series Generator API",
+    "description": "Backend API for the AI Series Generator.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Get Dashboard",
+        "operationId": "get_dashboard_dashboard_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardRead"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series": {
+      "post": {
+        "tags": [
+          "series"
+        ],
+        "summary": "Create Series",
+        "operationId": "create_series_series_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeriesCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "series"
+        ],
+        "summary": "List Series",
+        "operationId": "list_series_series_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SeriesSummary"
+                  },
+                  "title": "Response List Series Series Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{series_id}": {
+      "get": {
+        "tags": [
+          "series"
+        ],
+        "summary": "Get Series",
+        "operationId": "get_series_series__series_id__get",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Series Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "series"
+        ],
+        "summary": "Delete Series",
+        "operationId": "delete_series_series__series_id__delete",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Series Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{series_id}/analyze": {
+      "post": {
+        "tags": [
+          "series"
+        ],
+        "summary": "Start Analysis",
+        "operationId": "start_analysis_series__series_id__analyze_post",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Series Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{series_id}/analysis": {
+      "get": {
+        "tags": [
+          "series"
+        ],
+        "summary": "Get Analysis",
+        "operationId": "get_analysis_series__series_id__analysis_get",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Series Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{job_id}": {
+      "get": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Get Job",
+        "operationId": "get_job_jobs__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{series_id}/questions": {
+      "get": {
+        "tags": [
+          "questions"
+        ],
+        "summary": "Get Questions",
+        "operationId": "get_questions_series__series_id__questions_get",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Series Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QuestionRead"
+                  },
+                  "title": "Response Get Questions Series  Series Id  Questions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{series_id}/answers": {
+      "post": {
+        "tags": [
+          "questions"
+        ],
+        "summary": "Submit Answers",
+        "operationId": "submit_answers_series__series_id__answers_post",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Series Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnswersSubmit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QuestionRead"
+                  },
+                  "title": "Response Submit Answers Series  Series Id  Answers Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{series_id}/episode-count": {
+      "get": {
+        "tags": [
+          "planning"
+        ],
+        "summary": "Get Episode Count",
+        "operationId": "get_episode_count_series__series_id__episode_count_get",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Series Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EpisodeCountRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "planning"
+        ],
+        "summary": "Update Episode Count",
+        "operationId": "update_episode_count_series__series_id__episode_count_put",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Series Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EpisodeCountUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EpisodeCountRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{series_id}/plan": {
+      "post": {
+        "tags": [
+          "planning"
+        ],
+        "summary": "Plan Episodes",
+        "operationId": "plan_episodes_series__series_id__plan_post",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Series Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{series_id}/episodes": {
+      "get": {
+        "tags": [
+          "planning"
+        ],
+        "summary": "Get Episodes",
+        "operationId": "get_episodes_series__series_id__episodes_get",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Series Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EpisodeRead"
+                  },
+                  "title": "Response Get Episodes Series  Series Id  Episodes Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{series_id}/validate": {
+      "post": {
+        "tags": [
+          "planning"
+        ],
+        "summary": "Validate Series",
+        "operationId": "validate_series_series__series_id__validate_post",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Series Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/episodes/{episode_id}": {
+      "patch": {
+        "tags": [
+          "episodes"
+        ],
+        "summary": "Update Episode",
+        "operationId": "update_episode_episodes__episode_id__patch",
+        "parameters": [
+          {
+            "name": "episode_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Episode Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EpisodeUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EpisodeRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{series_id}/bible/lock": {
+      "post": {
+        "tags": [
+          "bible"
+        ],
+        "summary": "Lock Bible",
+        "operationId": "lock_bible_series__series_id__bible_lock_post",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Series Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BibleRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{series_id}/bible": {
+      "get": {
+        "tags": [
+          "bible"
+        ],
+        "summary": "Get Bible",
+        "operationId": "get_bible_series__series_id__bible_get",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Series Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BibleRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{series_id}/storyboard": {
+      "post": {
+        "tags": [
+          "storyboard"
+        ],
+        "summary": "Generate Storyboard",
+        "operationId": "generate_storyboard_series__series_id__storyboard_post",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Series Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "storyboard"
+        ],
+        "summary": "Get Storyboard",
+        "operationId": "get_storyboard_series__series_id__storyboard_get",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Series Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryboardRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{series_id}/estimate": {
+      "get": {
+        "tags": [
+          "storyboard"
+        ],
+        "summary": "Get Estimate",
+        "operationId": "get_estimate_series__series_id__estimate_get",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Series Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstimateRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{series_id}/storyboard/approve": {
+      "post": {
+        "tags": [
+          "storyboard"
+        ],
+        "summary": "Approve Storyboard",
+        "operationId": "approve_storyboard_series__series_id__storyboard_approve_post",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Series Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryboardApproval"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shots/{shot_id}": {
+      "patch": {
+        "tags": [
+          "storyboard"
+        ],
+        "summary": "Update Shot",
+        "operationId": "update_shot_shots__shot_id__patch",
+        "parameters": [
+          {
+            "name": "shot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Shot Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShotUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShotRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shots/{shot_id}/regenerate": {
+      "post": {
+        "tags": [
+          "storyboard"
+        ],
+        "summary": "Regenerate Shot",
+        "operationId": "regenerate_shot_shots__shot_id__regenerate_post",
+        "parameters": [
+          {
+            "name": "shot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Shot Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShotRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shots/{shot_id}/versions": {
+      "get": {
+        "tags": [
+          "storyboard"
+        ],
+        "summary": "Get Shot Versions",
+        "operationId": "get_shot_versions_shots__shot_id__versions_get",
+        "parameters": [
+          {
+            "name": "shot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Shot Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ShotVersionRead"
+                  },
+                  "title": "Response Get Shot Versions Shots  Shot Id  Versions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{series_id}/render": {
+      "post": {
+        "tags": [
+          "render"
+        ],
+        "summary": "Start Render",
+        "operationId": "start_render_series__series_id__render_post",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Series Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RenderAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "render"
+        ],
+        "summary": "Get Render Status",
+        "operationId": "get_render_status_series__series_id__render_get",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Series Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RenderStatusRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{series_id}/events": {
+      "get": {
+        "tags": [
+          "render"
+        ],
+        "summary": "Stream Events",
+        "operationId": "stream_events_series__series_id__events_get",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Series Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/series/{series_id}/episodes/{episode_number}/video": {
+      "get": {
+        "tags": [
+          "render"
+        ],
+        "summary": "Get Episode Video",
+        "operationId": "get_episode_video_series__series_id__episodes__episode_number__video_get",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Series Id"
+            }
+          },
+          {
+            "name": "episode_number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Episode Number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EpisodeVideoRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shots/{shot_id}/retry": {
+      "post": {
+        "tags": [
+          "render"
+        ],
+        "summary": "Retry Shot",
+        "operationId": "retry_shot_shots__shot_id__retry_post",
+        "parameters": [
+          {
+            "name": "shot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Shot Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetryAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Root  Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AnalysisResponse": {
+        "properties": {
+          "series_id": {
+            "type": "string",
+            "title": "Series Id"
+          },
+          "characters": {
+            "items": {
+              "$ref": "#/components/schemas/Character"
+            },
+            "type": "array",
+            "title": "Characters"
+          },
+          "locations": {
+            "items": {
+              "$ref": "#/components/schemas/Location"
+            },
+            "type": "array",
+            "title": "Locations"
+          },
+          "arcs": {
+            "items": {
+              "$ref": "#/components/schemas/Arc"
+            },
+            "type": "array",
+            "title": "Arcs"
+          },
+          "completeness": {
+            "$ref": "#/components/schemas/Completeness"
+          },
+          "analyzed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Analyzed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "series_id",
+          "characters",
+          "locations",
+          "arcs",
+          "completeness",
+          "analyzed_at"
+        ],
+        "title": "AnalysisResponse"
+      },
+      "AnswerItem": {
+        "properties": {
+          "question_id": {
+            "type": "string",
+            "title": "Question Id"
+          },
+          "value": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question_id",
+          "value"
+        ],
+        "title": "AnswerItem"
+      },
+      "AnswersSubmit": {
+        "properties": {
+          "answers": {
+            "items": {
+              "$ref": "#/components/schemas/AnswerItem"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Answers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "answers"
+        ],
+        "title": "AnswersSubmit"
+      },
+      "Arc": {
+        "properties": {
+          "index": {
+            "type": "integer",
+            "title": "Index"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "index",
+          "title",
+          "summary"
+        ],
+        "title": "Arc"
+      },
+      "BibleRead": {
+        "properties": {
+          "series_id": {
+            "type": "string",
+            "title": "Series Id"
+          },
+          "locked": {
+            "type": "boolean",
+            "title": "Locked"
+          },
+          "locked_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Locked At"
+          },
+          "series": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Series"
+          },
+          "style": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Style"
+          },
+          "characters": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Characters"
+          },
+          "locations": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Locations"
+          },
+          "arcs": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Arcs"
+          },
+          "episodes": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Episodes"
+          },
+          "answers": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Answers"
+          },
+          "completeness": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Completeness"
+          }
+        },
+        "type": "object",
+        "required": [
+          "series_id",
+          "locked",
+          "locked_at",
+          "series",
+          "style",
+          "characters",
+          "locations",
+          "arcs",
+          "episodes",
+          "answers",
+          "completeness"
+        ],
+        "title": "BibleRead"
+      },
+      "Character": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "Character"
+      },
+      "Completeness": {
+        "properties": {
+          "score": {
+            "type": "integer",
+            "title": "Score"
+          },
+          "missing": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Missing"
+          },
+          "signals": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Signals"
+          }
+        },
+        "type": "object",
+        "required": [
+          "score",
+          "missing",
+          "signals"
+        ],
+        "title": "Completeness"
+      },
+      "CostLine": {
+        "properties": {
+          "item": {
+            "type": "string",
+            "title": "Item"
+          },
+          "quantity": {
+            "type": "number",
+            "title": "Quantity"
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit"
+          },
+          "unit_cost_usd": {
+            "type": "number",
+            "title": "Unit Cost Usd"
+          },
+          "cost_usd": {
+            "type": "number",
+            "title": "Cost Usd"
+          }
+        },
+        "type": "object",
+        "required": [
+          "item",
+          "quantity",
+          "unit",
+          "unit_cost_usd",
+          "cost_usd"
+        ],
+        "title": "CostLine"
+      },
+      "DashboardCounts": {
+        "properties": {
+          "active_series": {
+            "type": "integer",
+            "title": "Active Series"
+          },
+          "episodes_in_flight": {
+            "type": "integer",
+            "title": "Episodes In Flight"
+          },
+          "render_queue": {
+            "type": "integer",
+            "title": "Render Queue"
+          },
+          "credits_remaining": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credits Remaining"
+          }
+        },
+        "type": "object",
+        "required": [
+          "active_series",
+          "episodes_in_flight",
+          "render_queue"
+        ],
+        "title": "DashboardCounts"
+      },
+      "DashboardJobRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "series_id": {
+            "type": "string",
+            "title": "Series Id"
+          },
+          "series_title": {
+            "type": "string",
+            "title": "Series Title"
+          },
+          "type": {
+            "$ref": "#/components/schemas/JobType"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "progress": {
+            "type": "number",
+            "title": "Progress"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "series_id",
+          "series_title",
+          "type",
+          "status",
+          "progress",
+          "created_at",
+          "started_at"
+        ],
+        "title": "DashboardJobRead"
+      },
+      "DashboardProductionRead": {
+        "properties": {
+          "series": {
+            "$ref": "#/components/schemas/SeriesSummary"
+          },
+          "render_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Render Run Id"
+          },
+          "render_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RenderRunStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "render_progress": {
+            "type": "number",
+            "title": "Render Progress"
+          },
+          "episode_count": {
+            "type": "integer",
+            "title": "Episode Count"
+          },
+          "shot_count": {
+            "type": "integer",
+            "title": "Shot Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "series",
+          "render_run_id",
+          "render_status",
+          "render_progress",
+          "episode_count",
+          "shot_count"
+        ],
+        "title": "DashboardProductionRead"
+      },
+      "DashboardRead": {
+        "properties": {
+          "counts": {
+            "$ref": "#/components/schemas/DashboardCounts"
+          },
+          "recent_series": {
+            "items": {
+              "$ref": "#/components/schemas/SeriesSummary"
+            },
+            "type": "array",
+            "title": "Recent Series"
+          },
+          "current_production": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DashboardProductionRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "render_activity": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardRenderActivityRead"
+            },
+            "type": "array",
+            "title": "Render Activity"
+          },
+          "active_jobs": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardJobRead"
+            },
+            "type": "array",
+            "title": "Active Jobs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "counts",
+          "recent_series",
+          "current_production",
+          "render_activity",
+          "active_jobs"
+        ],
+        "title": "DashboardRead"
+      },
+      "DashboardRenderActivityRead": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "episodes_assembled": {
+            "type": "integer",
+            "title": "Episodes Assembled"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "episodes_assembled"
+        ],
+        "title": "DashboardRenderActivityRead"
+      },
+      "EndingType": {
+        "type": "string",
+        "enum": [
+          "cliffhanger",
+          "conclusion"
+        ],
+        "title": "EndingType"
+      },
+      "EpisodeCountRead": {
+        "properties": {
+          "series_id": {
+            "type": "string",
+            "title": "Series Id"
+          },
+          "episode_count": {
+            "type": "integer",
+            "title": "Episode Count"
+          },
+          "suggested_count": {
+            "type": "integer",
+            "title": "Suggested Count"
+          },
+          "source": {
+            "$ref": "#/components/schemas/EpisodeCountSource"
+          },
+          "warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warning"
+          },
+          "range_min": {
+            "type": "integer",
+            "title": "Range Min"
+          },
+          "range_max": {
+            "type": "integer",
+            "title": "Range Max"
+          }
+        },
+        "type": "object",
+        "required": [
+          "series_id",
+          "episode_count",
+          "suggested_count",
+          "source",
+          "warning",
+          "range_min",
+          "range_max"
+        ],
+        "title": "EpisodeCountRead"
+      },
+      "EpisodeCountSource": {
+        "type": "string",
+        "enum": [
+          "user",
+          "auto"
+        ],
+        "title": "EpisodeCountSource"
+      },
+      "EpisodeCountUpdate": {
+        "properties": {
+          "episode_count": {
+            "type": "integer",
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Episode Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "episode_count"
+        ],
+        "title": "EpisodeCountUpdate"
+      },
+      "EpisodeLength": {
+        "type": "integer",
+        "enum": [
+          1,
+          2,
+          3,
+          5
+        ],
+        "title": "EpisodeLength"
+      },
+      "EpisodeRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "series_id": {
+            "type": "string",
+            "title": "Series Id"
+          },
+          "number": {
+            "type": "integer",
+            "title": "Number"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "ending_type": {
+            "$ref": "#/components/schemas/EndingType"
+          },
+          "hook_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HookType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hook_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hook Description"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "series_id",
+          "number",
+          "title",
+          "summary",
+          "ending_type",
+          "hook_type",
+          "hook_description",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "EpisodeRead"
+      },
+      "EpisodeRenderRead": {
+        "properties": {
+          "episode_id": {
+            "type": "string",
+            "title": "Episode Id"
+          },
+          "episode_number": {
+            "type": "integer",
+            "title": "Episode Number"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EpisodeRenderStatus"
+          },
+          "video_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Video Url"
+          },
+          "duration_seconds": {
+            "type": "integer",
+            "title": "Duration Seconds"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "episode_id",
+          "episode_number",
+          "status",
+          "video_url",
+          "duration_seconds",
+          "error"
+        ],
+        "title": "EpisodeRenderRead"
+      },
+      "EpisodeRenderStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "rendering",
+          "assembled",
+          "failed"
+        ],
+        "title": "EpisodeRenderStatus"
+      },
+      "EpisodeUpdate": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "ending_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EndingType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hook_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HookType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hook_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hook Description"
+          }
+        },
+        "type": "object",
+        "title": "EpisodeUpdate"
+      },
+      "EpisodeVideoRead": {
+        "properties": {
+          "series_id": {
+            "type": "string",
+            "title": "Series Id"
+          },
+          "episode_number": {
+            "type": "integer",
+            "title": "Episode Number"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EpisodeRenderStatus"
+          },
+          "video_url": {
+            "type": "string",
+            "title": "Video Url"
+          },
+          "format": {
+            "type": "string",
+            "title": "Format"
+          },
+          "duration_seconds": {
+            "type": "integer",
+            "title": "Duration Seconds"
+          },
+          "assembled_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Assembled At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "series_id",
+          "episode_number",
+          "status",
+          "video_url",
+          "format",
+          "duration_seconds",
+          "assembled_at"
+        ],
+        "title": "EpisodeVideoRead"
+      },
+      "EstimateRead": {
+        "properties": {
+          "series_id": {
+            "type": "string",
+            "title": "Series Id"
+          },
+          "shot_count": {
+            "type": "integer",
+            "title": "Shot Count"
+          },
+          "episode_count": {
+            "type": "integer",
+            "title": "Episode Count"
+          },
+          "total_shot_seconds": {
+            "type": "integer",
+            "title": "Total Shot Seconds"
+          },
+          "estimated_cost_usd": {
+            "type": "number",
+            "title": "Estimated Cost Usd"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "estimated_render_seconds": {
+            "type": "integer",
+            "title": "Estimated Render Seconds"
+          },
+          "breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/CostLine"
+            },
+            "type": "array",
+            "title": "Breakdown"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "series_id",
+          "shot_count",
+          "episode_count",
+          "total_shot_seconds",
+          "estimated_cost_usd",
+          "currency",
+          "estimated_render_seconds",
+          "breakdown",
+          "generated_at"
+        ],
+        "title": "EstimateRead"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HookType": {
+        "type": "string",
+        "enum": [
+          "unanswered_question",
+          "shocking_reveal",
+          "character_in_danger",
+          "betrayal",
+          "sudden_twist",
+          "impossible_choice"
+        ],
+        "title": "HookType"
+      },
+      "JobAccepted": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          },
+          "type": {
+            "$ref": "#/components/schemas/JobType"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "type",
+          "status"
+        ],
+        "title": "JobAccepted"
+      },
+      "JobRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "series_id": {
+            "type": "string",
+            "title": "Series Id"
+          },
+          "type": {
+            "$ref": "#/components/schemas/JobType"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "progress": {
+            "type": "number",
+            "title": "Progress"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "series_id",
+          "type",
+          "status",
+          "progress",
+          "result",
+          "error",
+          "created_at",
+          "updated_at",
+          "started_at",
+          "finished_at"
+        ],
+        "title": "JobRead"
+      },
+      "JobStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "running",
+          "succeeded",
+          "failed"
+        ],
+        "title": "JobStatus"
+      },
+      "JobType": {
+        "type": "string",
+        "enum": [
+          "analyze",
+          "plan",
+          "storyboard",
+          "render",
+          "shot_retry"
+        ],
+        "title": "JobType"
+      },
+      "Location": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "Location"
+      },
+      "QuestionOption": {
+        "properties": {
+          "value": {
+            "type": "string",
+            "title": "Value"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "is_auto_decide": {
+            "type": "boolean",
+            "title": "Is Auto Decide",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "label"
+        ],
+        "title": "QuestionOption"
+      },
+      "QuestionRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject"
+          },
+          "prompt": {
+            "type": "string",
+            "title": "Prompt"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/QuestionOption"
+            },
+            "type": "array",
+            "title": "Options"
+          },
+          "allow_custom": {
+            "type": "boolean",
+            "title": "Allow Custom"
+          },
+          "position": {
+            "type": "integer",
+            "title": "Position"
+          },
+          "answered": {
+            "type": "boolean",
+            "title": "Answered"
+          },
+          "answer_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer Value"
+          },
+          "answered_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answered At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "category",
+          "subject",
+          "prompt",
+          "options",
+          "allow_custom",
+          "position",
+          "answered",
+          "answer_value",
+          "answered_at"
+        ],
+        "title": "QuestionRead"
+      },
+      "ReferenceImageRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "prompt": {
+            "type": "string",
+            "title": "Prompt"
+          },
+          "image_url": {
+            "type": "string",
+            "title": "Image Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "prompt",
+          "image_url"
+        ],
+        "title": "ReferenceImageRead"
+      },
+      "RenderAccepted": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          },
+          "type": {
+            "$ref": "#/components/schemas/JobType"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "series_id": {
+            "type": "string",
+            "title": "Series Id"
+          },
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "shot_count": {
+            "type": "integer",
+            "title": "Shot Count"
+          },
+          "episode_count": {
+            "type": "integer",
+            "title": "Episode Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "type",
+          "status",
+          "series_id",
+          "run_id",
+          "shot_count",
+          "episode_count"
+        ],
+        "title": "RenderAccepted"
+      },
+      "RenderRunStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "running",
+          "succeeded",
+          "failed"
+        ],
+        "title": "RenderRunStatus"
+      },
+      "RenderStatusRead": {
+        "properties": {
+          "series_id": {
+            "type": "string",
+            "title": "Series Id"
+          },
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RenderRunStatus"
+          },
+          "progress": {
+            "type": "number",
+            "title": "Progress"
+          },
+          "shot_count": {
+            "type": "integer",
+            "title": "Shot Count"
+          },
+          "episode_count": {
+            "type": "integer",
+            "title": "Episode Count"
+          },
+          "shots": {
+            "items": {
+              "$ref": "#/components/schemas/ShotRenderRead"
+            },
+            "type": "array",
+            "title": "Shots"
+          },
+          "episodes": {
+            "items": {
+              "$ref": "#/components/schemas/EpisodeRenderRead"
+            },
+            "type": "array",
+            "title": "Episodes"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "series_id",
+          "run_id",
+          "status",
+          "progress",
+          "shot_count",
+          "episode_count",
+          "shots",
+          "episodes",
+          "started_at",
+          "finished_at",
+          "error"
+        ],
+        "title": "RenderStatusRead"
+      },
+      "RetryAccepted": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          },
+          "type": {
+            "$ref": "#/components/schemas/JobType"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "shot_id": {
+            "type": "string",
+            "title": "Shot Id"
+          },
+          "attempt": {
+            "type": "integer",
+            "title": "Attempt"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "type",
+          "status",
+          "shot_id",
+          "attempt"
+        ],
+        "title": "RetryAccepted"
+      },
+      "SeriesCreate": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "script": {
+            "type": "string",
+            "maxLength": 200000,
+            "minLength": 1,
+            "title": "Script"
+          },
+          "tone": {
+            "$ref": "#/components/schemas/Tone"
+          },
+          "episode_length": {
+            "$ref": "#/components/schemas/EpisodeLength"
+          },
+          "episode_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 50.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Episode Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "script",
+          "tone",
+          "episode_length"
+        ],
+        "title": "SeriesCreate"
+      },
+      "SeriesDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "state": {
+            "$ref": "#/components/schemas/SeriesState"
+          },
+          "tone": {
+            "$ref": "#/components/schemas/Tone"
+          },
+          "episode_length": {
+            "type": "integer",
+            "title": "Episode Length"
+          },
+          "episode_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Episode Count"
+          },
+          "episode_count_source": {
+            "type": "string",
+            "title": "Episode Count Source"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "script": {
+            "type": "string",
+            "title": "Script"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "state",
+          "tone",
+          "episode_length",
+          "episode_count",
+          "episode_count_source",
+          "created_at",
+          "updated_at",
+          "script"
+        ],
+        "title": "SeriesDetail"
+      },
+      "SeriesState": {
+        "type": "string",
+        "enum": [
+          "UPLOADED",
+          "ANALYZED",
+          "QUESTIONS",
+          "BIBLE_LOCKED",
+          "STORYBOARD",
+          "APPROVED",
+          "RENDERING",
+          "ASSEMBLED",
+          "DONE"
+        ],
+        "title": "SeriesState"
+      },
+      "SeriesSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "state": {
+            "$ref": "#/components/schemas/SeriesState"
+          },
+          "tone": {
+            "$ref": "#/components/schemas/Tone"
+          },
+          "episode_length": {
+            "type": "integer",
+            "title": "Episode Length"
+          },
+          "episode_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Episode Count"
+          },
+          "episode_count_source": {
+            "type": "string",
+            "title": "Episode Count Source"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "state",
+          "tone",
+          "episode_length",
+          "episode_count",
+          "episode_count_source",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "SeriesSummary"
+      },
+      "ShotRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "series_id": {
+            "type": "string",
+            "title": "Series Id"
+          },
+          "scene_id": {
+            "type": "string",
+            "title": "Scene Id"
+          },
+          "number": {
+            "type": "integer",
+            "title": "Number"
+          },
+          "prompt": {
+            "type": "string",
+            "title": "Prompt"
+          },
+          "duration_seconds": {
+            "type": "integer",
+            "title": "Duration Seconds"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "keyframe_url": {
+            "type": "string",
+            "title": "Keyframe Url"
+          },
+          "references": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "References"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "series_id",
+          "scene_id",
+          "number",
+          "prompt",
+          "duration_seconds",
+          "status",
+          "keyframe_url",
+          "references",
+          "version",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ShotRead"
+      },
+      "ShotRenderRead": {
+        "properties": {
+          "shot_id": {
+            "type": "string",
+            "title": "Shot Id"
+          },
+          "episode_number": {
+            "type": "integer",
+            "title": "Episode Number"
+          },
+          "scene_number": {
+            "type": "integer",
+            "title": "Scene Number"
+          },
+          "shot_number": {
+            "type": "integer",
+            "title": "Shot Number"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ShotRenderStatus"
+          },
+          "attempts": {
+            "type": "integer",
+            "title": "Attempts"
+          },
+          "asset_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asset Url"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "shot_id",
+          "episode_number",
+          "scene_number",
+          "shot_number",
+          "status",
+          "attempts",
+          "asset_url",
+          "error"
+        ],
+        "title": "ShotRenderRead"
+      },
+      "ShotRenderStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "rendering",
+          "rendered",
+          "failed"
+        ],
+        "title": "ShotRenderStatus"
+      },
+      "ShotUpdate": {
+        "properties": {
+          "prompt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4000,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt"
+          },
+          "duration_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 8.0,
+                "minimum": 3.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Seconds"
+          },
+          "references": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "References"
+          }
+        },
+        "type": "object",
+        "title": "ShotUpdate"
+      },
+      "ShotVersionRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "shot_id": {
+            "type": "string",
+            "title": "Shot Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "prompt": {
+            "type": "string",
+            "title": "Prompt"
+          },
+          "duration_seconds": {
+            "type": "integer",
+            "title": "Duration Seconds"
+          },
+          "references": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "References"
+          },
+          "keyframe_url": {
+            "type": "string",
+            "title": "Keyframe Url"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "shot_id",
+          "version",
+          "prompt",
+          "duration_seconds",
+          "references",
+          "keyframe_url",
+          "created_at"
+        ],
+        "title": "ShotVersionRead"
+      },
+      "StoryboardApproval": {
+        "properties": {
+          "series_id": {
+            "type": "string",
+            "title": "Series Id"
+          },
+          "approved": {
+            "type": "boolean",
+            "title": "Approved"
+          },
+          "approved_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Approved At"
+          },
+          "estimated_cost_usd": {
+            "type": "number",
+            "title": "Estimated Cost Usd"
+          },
+          "estimated_render_seconds": {
+            "type": "integer",
+            "title": "Estimated Render Seconds"
+          },
+          "shot_count": {
+            "type": "integer",
+            "title": "Shot Count"
+          },
+          "episode_count": {
+            "type": "integer",
+            "title": "Episode Count"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          }
+        },
+        "type": "object",
+        "required": [
+          "series_id",
+          "approved",
+          "approved_at",
+          "estimated_cost_usd",
+          "estimated_render_seconds",
+          "shot_count",
+          "episode_count",
+          "currency"
+        ],
+        "title": "StoryboardApproval"
+      },
+      "StoryboardEpisodeRead": {
+        "properties": {
+          "episode_id": {
+            "type": "string",
+            "title": "Episode Id"
+          },
+          "number": {
+            "type": "integer",
+            "title": "Number"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "ending_type": {
+            "$ref": "#/components/schemas/EndingType"
+          },
+          "hook_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HookType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "scenes": {
+            "items": {
+              "$ref": "#/components/schemas/StoryboardSceneRead"
+            },
+            "type": "array",
+            "title": "Scenes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "episode_id",
+          "number",
+          "title",
+          "ending_type",
+          "hook_type",
+          "scenes"
+        ],
+        "title": "StoryboardEpisodeRead"
+      },
+      "StoryboardRead": {
+        "properties": {
+          "series_id": {
+            "type": "string",
+            "title": "Series Id"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "approved_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved At"
+          },
+          "approved": {
+            "type": "boolean",
+            "title": "Approved"
+          },
+          "references": {
+            "items": {
+              "$ref": "#/components/schemas/ReferenceImageRead"
+            },
+            "type": "array",
+            "title": "References"
+          },
+          "episodes": {
+            "items": {
+              "$ref": "#/components/schemas/StoryboardEpisodeRead"
+            },
+            "type": "array",
+            "title": "Episodes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "series_id",
+          "generated_at",
+          "approved_at",
+          "approved",
+          "references",
+          "episodes"
+        ],
+        "title": "StoryboardRead"
+      },
+      "StoryboardSceneRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "number": {
+            "type": "integer",
+            "title": "Number"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "location_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Name"
+          },
+          "shots": {
+            "items": {
+              "$ref": "#/components/schemas/ShotRead"
+            },
+            "type": "array",
+            "title": "Shots"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "number",
+          "title",
+          "description",
+          "location_name",
+          "shots"
+        ],
+        "title": "StoryboardSceneRead"
+      },
+      "Tone": {
+        "type": "string",
+        "enum": [
+          "thriller",
+          "romance",
+          "comedy",
+          "drama",
+          "mystery"
+        ],
+        "title": "Tone"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "ValidationIssue": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "episode_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Episode Id"
+          },
+          "episode_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Episode Number"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ValidationIssue"
+      },
+      "ValidationResult": {
+        "properties": {
+          "series_id": {
+            "type": "string",
+            "title": "Series Id"
+          },
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationIssue"
+            },
+            "type": "array",
+            "title": "Issues"
+          },
+          "checked_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Checked At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "series_id",
+          "valid",
+          "issues",
+          "checked_at"
+        ],
+        "title": "ValidationResult"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "meta",
+      "description": "Health and service metadata."
+    },
+    {
+      "name": "dashboard",
+      "description": "Aggregated overview data for the home dashboard."
+    },
+    {
+      "name": "series",
+      "description": "Series projects and script analysis."
+    },
+    {
+      "name": "jobs",
+      "description": "Background job status for analyze, plan, storyboard, render, and shot retry."
+    },
+    {
+      "name": "questions",
+      "description": "Gap questions and answers."
+    },
+    {
+      "name": "planning",
+      "description": "Episode count, planning, and QA."
+    },
+    {
+      "name": "episodes",
+      "description": "Episode outline editing."
+    },
+    {
+      "name": "bible",
+      "description": "Series bible lock and retrieval."
+    },
+    {
+      "name": "storyboard",
+      "description": "Storyboard generation, shots, versions, and approval."
+    },
+    {
+      "name": "render",
+      "description": "Render workflow, SSE progress, retries, and delivery."
+    }
+  ]
+}
