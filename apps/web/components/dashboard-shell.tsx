@@ -6,49 +6,32 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
-  Bell,
   BookOpen,
   ChevronRight,
   Clapperboard,
+  Film,
   LayoutDashboard,
   Library,
   Menu,
-  MoreHorizontal,
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
-  Search,
-  Users,
+  Sparkles,
   X,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 const workspaceNavItems: { label: string; href: string; icon: LucideIcon }[] = [
-  { label: "Overview", href: "/", icon: LayoutDashboard },
-  { label: "All series", href: "/series", icon: Library },
+  { label: "Studio", href: "/", icon: LayoutDashboard },
+  { label: "Series library", href: "/series", icon: Library },
 ];
 
 const mobileNavItems: { label: string; href: string; icon: LucideIcon }[] = [
   ...workspaceNavItems,
-  { label: "New series", href: "/series/new", icon: Plus },
-];
-
-const secondaryNav: {
-  label: string;
-  href: string;
-  icon: LucideIcon;
-  external?: boolean;
-}[] = [
-  {
-    label: "API docs",
-    href: "http://127.0.0.1:8000/docs",
-    icon: BookOpen,
-    external: true,
-  },
+  { label: "New production", href: "/series/new", icon: Plus },
 ];
 
 function NavItem({
@@ -56,47 +39,35 @@ function NavItem({
   href,
   icon: Icon,
   active,
-  external,
   onNavigate,
 }: {
   label: string;
   href: string;
   icon: LucideIcon;
   active: boolean;
-  external?: boolean;
   onNavigate?: () => void;
 }) {
-  const className = cn(
-    "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
-    active
-      ? "bg-sidebar-accent text-sidebar-accent-foreground"
-      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-  );
-
-  const content = (
-    <>
-      <Icon className="size-4" />
-      <span>{label}</span>
-    </>
-  );
-
-  if (external) {
-    return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noreferrer"
-        className={className}
-        onClick={onNavigate}
-      >
-        {content}
-      </a>
-    );
-  }
-
   return (
-    <Link href={href} className={className} onClick={onNavigate}>
-      {content}
+    <Link
+      href={href}
+      onClick={onNavigate}
+      className={cn(
+        "group flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
+        active
+          ? "bg-primary/10 text-foreground"
+          : "text-sidebar-foreground/65 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+      )}
+    >
+      <Icon
+        className={cn(
+          "size-4 transition-colors",
+          active ? "text-primary" : "text-sidebar-foreground/50",
+        )}
+      />
+      <span>{label}</span>
+      {active ? (
+        <span className="ml-auto size-1.5 rounded-full bg-primary" />
+      ) : null}
     </Link>
   );
 }
@@ -112,21 +83,25 @@ function SidebarContent({
 }) {
   return (
     <>
-      <div className="flex h-14 items-center gap-2.5 border-b border-sidebar-border px-5">
-        <Link href="/" className="flex items-center gap-2.5" onClick={onNavigate}>
-          <Clapperboard className="size-4" />
-          <span className="text-sm font-semibold tracking-tight">
-            SeriesForge
+      <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-4">
+        <Link href="/" className="flex items-center gap-3" onClick={onNavigate}>
+          <span className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-primary to-[oklch(0.65_0.18_32)] text-primary-foreground shadow-[0_10px_30px_-12px_oklch(0.81_0.16_78/0.8)]">
+            <Clapperboard className="size-4" />
+          </span>
+          <span className="leading-tight">
+            <span className="block text-sm font-semibold tracking-tight">
+              SeriesForge
+            </span>
+            <span className="block text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              AI series studio
+            </span>
           </span>
         </Link>
-        <Badge variant="secondary" className="ml-auto text-[10px]">
-          Local
-        </Badge>
         {onClose ? (
           <Button
             variant="ghost"
             size="icon"
-            className="-mr-2 size-7"
+            className="ml-auto size-7"
             onClick={onClose}
             aria-label="Close sidebar"
           >
@@ -139,14 +114,14 @@ function SidebarContent({
         <Button className="w-full justify-start" asChild>
           <Link href="/series/new" onClick={onNavigate}>
             <Plus className="size-4" />
-            New series
+            New production
           </Link>
         </Button>
       </div>
 
       <nav className="flex-1 space-y-1 px-3">
-        <p className="px-2 pb-2 pt-3 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-          Workspace
+        <p className="px-3 pb-2 pt-2 text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+          Studio
         </p>
         {workspaceNavItems.map((item) => (
           <NavItem
@@ -156,51 +131,45 @@ function SidebarContent({
             onNavigate={onNavigate}
           />
         ))}
-        <p className="px-2 pb-2 pt-6 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-          System
-        </p>
-        {secondaryNav.map((item) => (
-          <NavItem
-            key={item.label}
-            {...item}
-            active={false}
-            onNavigate={onNavigate}
-          />
-        ))}
+
+        <div className="mt-6 rounded-xl border border-sidebar-border bg-gradient-to-br from-primary/[0.07] to-transparent p-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="size-3.5 text-primary" />
+            <p className="text-[11px] font-medium">How a series is made</p>
+          </div>
+          <ol className="mt-2.5 space-y-1.5 text-[11px] text-muted-foreground">
+            {[
+              "Paste your script",
+              "Answer the gap questions",
+              "Shape episodes & hooks",
+              "Approve the storyboard",
+              "Render and deliver",
+            ].map((step, index) => (
+              <li key={step} className="flex items-start gap-2">
+                <span className="mt-px flex size-4 shrink-0 items-center justify-center rounded-full border border-sidebar-border font-mono text-[9px] text-primary/80">
+                  {index + 1}
+                </span>
+                {step}
+              </li>
+            ))}
+          </ol>
+        </div>
       </nav>
 
-      <div className="border-t border-sidebar-border p-3">
-        <div className="rounded-lg border bg-background/60 p-3">
-          <div className="flex items-center gap-2">
-            <Clapperboard className="size-4 text-muted-foreground" />
-            <p className="text-xs font-medium">Credits</p>
-            <span className="ml-auto font-mono text-xs text-muted-foreground">
-              —
-            </span>
-          </div>
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            Usage appears after your first render.
-          </p>
-        </div>
-
-        <div className="mt-3 flex items-center gap-2.5 rounded-lg px-2 py-1.5">
-          <div className="flex size-8 items-center justify-center rounded-full bg-secondary">
-            <Users className="size-4 text-muted-foreground" />
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-xs font-medium">Workspace</p>
-            <p className="truncate text-[11px] text-muted-foreground">
-              Local preview
-            </p>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="ml-auto size-7"
-            aria-label="Account menu"
-          >
-            <MoreHorizontal className="size-4" />
-          </Button>
+      <div className="space-y-2 border-t border-sidebar-border p-3">
+        <a
+          href="http://127.0.0.1:8000/docs"
+          target="_blank"
+          rel="noreferrer"
+          onClick={onNavigate}
+          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        >
+          <BookOpen className="size-4" />
+          API docs
+        </a>
+        <div className="flex items-center gap-2 px-3 pb-1 text-[11px] text-muted-foreground">
+          <span className="size-1.5 rounded-full bg-emerald-400" />
+          Local studio · connected
         </div>
       </div>
     </>
@@ -215,19 +184,22 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const isAllSeries = pathname === "/series";
   const isSeriesWorkspace = pathname.startsWith("/series/") && !isNewSeries;
   const pageLabel = isNewSeries
-    ? "New series"
+    ? "New production"
     : isAllSeries
-      ? "All series"
+      ? "Series library"
       : isSeriesWorkspace
-        ? "Series workspace"
-        : "Overview";
+        ? "Production"
+        : "Studio";
 
   const isActive = (href: string) => {
     if (href === "/") {
       return pathname === "/";
     }
     if (href === "/series") {
-      return pathname === "/series";
+      return (
+        pathname === "/series" ||
+        (pathname.startsWith("/series/") && pathname !== "/series/new")
+      );
     }
     return pathname === href || pathname.startsWith(`${href}/`);
   };
@@ -264,8 +236,8 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </>
         ) : null}
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 border-b bg-background/80 backdrop-blur">
+        <div className="studio-canvas flex min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-20 border-b border-border/70 bg-background/70 backdrop-blur-xl">
             <div className="flex h-14 items-center gap-3 px-4 md:px-6">
               <Button
                 variant="ghost"
@@ -294,34 +266,29 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               </Button>
 
               <Link href="/" className="flex items-center gap-2 lg:hidden">
-                <Clapperboard className="size-4" />
+                <Clapperboard className="size-4 text-primary" />
                 <span className="text-sm font-semibold">SeriesForge</span>
               </Link>
 
-              <div className="hidden items-center gap-1.5 text-sm text-muted-foreground md:flex">
+              <div className="hidden items-center gap-2 text-xs text-muted-foreground md:flex">
+                <Film className="size-3.5 text-primary/70" />
                 <Link
                   href="/"
                   className="transition-colors hover:text-foreground"
                 >
-                  Workspace
+                  Studio
                 </Link>
-                <ChevronRight className="size-3.5" />
+                <ChevronRight className="size-3" />
                 <span className="text-foreground">{pageLabel}</span>
               </div>
 
               <div className="ml-auto flex items-center gap-2">
-                <div className="relative hidden md:block">
-                  <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Search series..."
-                    className="h-8 w-52 pl-8 text-xs"
-                  />
-                </div>
                 <Badge
                   variant="outline"
-                  className="hidden text-[10px] sm:inline-flex"
+                  className="hidden gap-1.5 border-emerald-500/30 text-[10px] text-emerald-300 sm:inline-flex"
                 >
-                  Local API
+                  <span className="size-1.5 rounded-full bg-emerald-400" />
+                  Local
                 </Badge>
                 <Button
                   variant="ghost"
@@ -338,17 +305,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                     <BookOpen className="size-4" />
                   </a>
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-8"
-                  aria-label="Notifications"
-                >
-                  <Bell className="size-4" />
-                </Button>
-                <div className="flex size-8 items-center justify-center rounded-full bg-secondary lg:hidden">
-                  <Users className="size-4 text-muted-foreground" />
-                </div>
               </div>
             </div>
 
@@ -360,7 +316,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                   className={cn(
                     "flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs",
                     isActive(item.href)
-                      ? "bg-secondary text-foreground"
+                      ? "bg-primary/15 text-foreground"
                       : "text-muted-foreground",
                   )}
                 >

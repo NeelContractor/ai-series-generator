@@ -5,11 +5,13 @@ import Link from "next/link";
 import {
   AlertCircle,
   ArrowLeft,
+  ArrowRight,
   BookOpen,
+  Check,
   Clapperboard,
+  FileText,
   Film,
   HelpCircle,
-  LayoutDashboard,
   ListVideo,
   Loader2,
   MapPin,
@@ -58,11 +60,15 @@ import {
   defaultTabForState,
   formatSignal,
   stateAtLeast,
+  stateLabel,
+  toneMeta,
+  tonePoster,
 } from "@/lib/series";
+import { cn } from "@/lib/utils";
 
 const tabs = [
-  { value: "overview", label: "Overview", icon: LayoutDashboard },
-  { value: "questions", label: "Questions", icon: HelpCircle },
+  { value: "overview", label: "Script", icon: FileText },
+  { value: "questions", label: "Brief", icon: HelpCircle },
   { value: "episodes", label: "Episodes", icon: Film },
   { value: "bible", label: "Bible", icon: BookOpen },
   { value: "storyboard", label: "Storyboard", icon: Clapperboard },
@@ -472,26 +478,38 @@ export function SeriesWorkspace({
     }
   }
 
-  async function saveEpisode(episodeId: string, payload: EpisodeUpdate) {
-    setBusy(`episode:${episodeId}`);
+  async function saveEpisodes(
+    updates: { episodeId: string; payload: EpisodeUpdate }[],
+  ) {
+    if (!updates.length) {
+      return;
+    }
+    setBusy("episodes");
     setError(null);
     try {
-      const result = await api.PATCH("/episodes/{episode_id}", {
-        params: { path: { episode_id: episodeId } },
-        body: payload,
-      });
-      if (result.error || !result.data) {
-        throw new Error(apiErrorMessage(result.error, result.response));
+      const saved: EpisodeRead[] = [];
+      for (const update of updates) {
+        const result = await api.PATCH("/episodes/{episode_id}", {
+          params: { path: { episode_id: update.episodeId } },
+          body: update.payload,
+        });
+        if (result.error || !result.data) {
+          throw new Error(apiErrorMessage(result.error, result.response));
+        }
+        saved.push(result.data);
       }
+      const byId = new Map(saved.map((episode) => [episode.id, episode]));
       setEpisodes((current) =>
-        current.map((episode) =>
-          episode.id === episodeId ? result.data : episode,
-        ),
+        current.map((episode) => byId.get(episode.id) ?? episode),
       );
       setValidation(null);
-      setNotice(`Episode ${result.data.number} saved.`);
+      setNotice(
+        saved.length === 1
+          ? `Episode ${saved[0]?.number ?? ""} saved.`
+          : `${saved.length} episodes saved.`,
+      );
     } catch (err) {
-      setError(errorMessage(err, "Could not save episode."));
+      setError(errorMessage(err, "Could not save episodes."));
       throw err;
     } finally {
       setBusy(null);
@@ -694,6 +712,49 @@ export function SeriesWorkspace({
 
   const isAnalyzing = busy === "analysis";
   const analyzed = analysis !== null;
+  const stageReached: Record<string, boolean> = {
+    overview: analyzed,
+    questions: stateAtLeast(series.state, "QUESTIONS"),
+    episodes: episodes.length > 0 || stateAtLeast(series.state, "BIBLE_LOCKED"),
+    bible: stateAtLeast(series.state, "BIBLE_LOCKED"),
+    storyboard: stateAtLeast(series.state, "STORYBOARD"),
+    render: stateAtLeast(series.state, "RENDERING"),
+  };
+
+  function continueFlow(state: SeriesDetail["state"]) {
+    if (state === "UPLOADED" || state === "ANALYZED") {
+      void startAnalysis();
+      return;
+    }
+    if (state === "QUESTIONS") {
+      setActiveTab("questions");
+      return;
+    }
+    if (state === "BIBLE_LOCKED") {
+      setActiveTab("storyboard");
+      return;
+    }
+    if (state === "STORYBOARD") {
+      setActiveTab("storyboard");
+      return;
+    }
+    setActiveTab("render");
+  }
+
+  const continueLabel =
+    series.state === "UPLOADED"
+      ? "Analyze script"
+      : series.state === "ANALYZED"
+        ? "Continue to brief"
+        : series.state === "QUESTIONS"
+          ? "Answer the brief"
+          : series.state === "BIBLE_LOCKED"
+            ? "Open storyboard"
+            : series.state === "STORYBOARD"
+              ? "Review storyboard"
+              : series.state === "APPROVED"
+                ? "Start render"
+                : "Open render";
 
   return (
     <>
@@ -701,7 +762,7 @@ export function SeriesWorkspace({
         <Button variant="ghost" size="sm" className="-ml-2" asChild>
           <Link href="/">
             <ArrowLeft className="size-4" />
-            Back to overview
+            Studio
           </Link>
         </Button>
         <Badge variant="outline" className="font-mono text-[10px]">
@@ -719,38 +780,68 @@ export function SeriesWorkspace({
         </Button>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {series.title}
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Questions, episodes, bible, storyboard, and render in one workspace.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">{series.state}</Badge>
-          <Badge variant="outline">{series.tone}</Badge>
-          <Badge variant="outline">{series.episode_length} min</Badge>
-          <Badge variant="outline">
-            {series.episode_count
-              ? `${series.episode_count} episodes`
-              : "Auto episode count"}
-          </Badge>
-          {isAnalyzing ? (
-            <Badge variant="outline">
-              <Loader2 className="size-3 animate-spin" />
-              Analyzing
-            </Badge>
-          ) : null}
-          {series.state === "UPLOADED" || series.state === "ANALYZED" ? (
-            <Button size="sm" onClick={() => void startAnalysis()}>
-              <Sparkles className="size-4" />
-              {series.state === "ANALYZED" ? "Re-run analysis" : "Start analysis"}
+      <section className="relative overflow-hidden rounded-2xl border">
+        <div
+          className="absolute inset-0"
+          style={{ backgroundImage: tonePoster(series.tone) }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/92 to-background/25" />
+        <div className="film-grid absolute inset-0 opacity-40" />
+        <div className="relative flex flex-col gap-6 p-6 md:p-8 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="eyebrow">
+              {toneMeta(series.tone).label} · {series.episode_length} min
+              episodes
+            </p>
+            <h1 className="mt-2 max-w-2xl text-balance text-3xl font-semibold leading-tight tracking-tight md:text-4xl">
+              {series.title}
+            </h1>
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <Badge variant="secondary">{stateLabel(series.state)}</Badge>
+              <Badge variant="outline">
+                {series.episode_count
+                  ? `${series.episode_count} episodes`
+                  : "Auto episode count"}
+              </Badge>
+              {episodes.length ? (
+                <Badge variant="outline">{episodes.length} outlines</Badge>
+              ) : null}
+              {isAnalyzing ? (
+                <Badge variant="outline">
+                  <Loader2 className="size-3 animate-spin" />
+                  Analyzing
+                </Badge>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {series.state === "ANALYZED" ? (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => void startAnalysis()}
+                disabled={busy !== null}
+              >
+                <Sparkles className="size-4" />
+                Re-run analysis
+              </Button>
+            ) : null}
+            <Button
+              size="sm"
+              onClick={() => continueFlow(series.state)}
+              disabled={busy !== null}
+            >
+              {isAnalyzing ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <ArrowRight className="size-4" />
+              )}
+              {isAnalyzing ? "Analyzing..." : continueLabel}
             </Button>
-          ) : null}
+          </div>
         </div>
-      </div>
+      </section>
 
       {error ? (
         <div
@@ -770,17 +861,39 @@ export function SeriesWorkspace({
       ) : null}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="h-auto w-full justify-start overflow-x-auto">
-          {tabs.map((tab) => (
-            <TabsTrigger
-              key={tab.value}
-              value={tab.value}
-              className="flex-none px-3"
-            >
-              <tab.icon className="size-3.5" />
-              {tab.label}
-            </TabsTrigger>
-          ))}
+        <TabsList className="mt-1 h-auto w-full justify-start gap-1 overflow-x-auto rounded-xl border bg-card/70 p-1.5 backdrop-blur">
+          {tabs.map((tab, index) => {
+            const reached = stageReached[tab.value] ?? false;
+            const active = activeTab === tab.value;
+            return (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className={cn(
+                  "flex-none gap-2 rounded-lg px-3 py-2 text-xs data-[state=active]:bg-primary/10 data-[state=active]:text-foreground dark:data-[state=active]:bg-primary/10 dark:data-[state=active]:text-foreground",
+                  !active && "text-muted-foreground",
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex size-5 items-center justify-center rounded-full font-mono text-[9px] transition-colors",
+                    active
+                      ? "bg-primary text-primary-foreground"
+                      : reached
+                        ? "bg-emerald-500/15 text-emerald-300"
+                        : "border border-border text-muted-foreground",
+                  )}
+                >
+                  {reached && !active ? (
+                    <Check className="size-3" />
+                  ) : (
+                    index + 1
+                  )}
+                </span>
+                {tab.label}
+              </TabsTrigger>
+            );
+          })}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -797,72 +910,12 @@ export function SeriesWorkspace({
             </Card>
           ) : analysis ? (
             <>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Next step</CardTitle>
-                  <CardDescription>
-                    Continue the pipeline from the current series state.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="max-w-xl text-xs text-muted-foreground">
-                    {series.state === "ANALYZED"
-                      ? "The script is analyzed. Review the gap questions before planning."
-                      : series.state === "QUESTIONS"
-                        ? "Confirm the episode count, then plan the series arc."
-                        : series.state === "BIBLE_LOCKED"
-                          ? "The bible is locked. Generate and review the storyboard."
-                          : series.state === "STORYBOARD"
-                            ? "Review shots, edit prompts, then approve the cost gate."
-                            : series.state === "APPROVED"
-                              ? "The storyboard is approved. Start the render."
-                              : "Track render progress and play assembled episodes."}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {series.state === "ANALYZED" ? (
-                      <Button
-                        size="sm"
-                        onClick={() => void loadQuestions().catch(() => {})}
-                        disabled={busy !== null}
-                      >
-                        Continue to questions
-                      </Button>
-                    ) : null}
-                    {series.state === "QUESTIONS" ? (
-                      <Button
-                        size="sm"
-                        onClick={() => setActiveTab("questions")}
-                      >
-                        Review questions
-                      </Button>
-                    ) : null}
-                    {series.state === "BIBLE_LOCKED" ? (
-                      <Button
-                        size="sm"
-                        onClick={() => setActiveTab("storyboard")}
-                      >
-                        Open storyboard
-                      </Button>
-                    ) : null}
-                    {series.state === "STORYBOARD" ? (
-                      <Button
-                        size="sm"
-                        onClick={() => setActiveTab("storyboard")}
-                      >
-                        Review storyboard
-                      </Button>
-                    ) : null}
-                    {stateAtLeast(series.state, "APPROVED") ? (
-                      <Button
-                        size="sm"
-                        onClick={() => setActiveTab("render")}
-                      >
-                        Open render
-                      </Button>
-                    ) : null}
-                  </div>
-                </CardContent>
-              </Card>
+              <div>
+                <p className="eyebrow">Script breakdown</p>
+                <h2 className="mt-1 text-lg font-semibold tracking-tight">
+                  What the analyzer found
+                </h2>
+              </div>
 
               <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(300px,1fr)]">
                 <Card>
@@ -1079,7 +1132,7 @@ export function SeriesWorkspace({
             episodes={episodes}
             validation={validation}
             busy={busy}
-            onSaveEpisode={saveEpisode}
+            onSaveEpisodes={saveEpisodes}
             onValidate={validateOutline}
             onPlan={planEpisodes}
             onGoQuestions={() => setActiveTab("questions")}
@@ -1117,7 +1170,11 @@ export function SeriesWorkspace({
         <TabsContent value="render">
           <SeriesRenderPanel
             seriesId={series.id}
+            seriesTitle={series.title}
+            tone={series.tone}
             state={series.state}
+            episodes={episodes}
+            storyboard={storyboard}
             renderStatus={renderStatus}
             busy={busy}
             onStart={startRender}

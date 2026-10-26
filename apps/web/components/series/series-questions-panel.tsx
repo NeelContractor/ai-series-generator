@@ -81,12 +81,19 @@ export function SeriesQuestionsPanel({
   const unanswered = questions.filter(
     (question) => !question.answered,
   ).length;
+  const unsavedAnswers = questions.filter(
+    (question) =>
+      !question.answered ||
+      (answers[question.id] ?? "auto") !== (question.answer_value ?? "auto"),
+  ).length;
   const parsedCount = Number(count);
   const countValid =
     countInfo !== null &&
     Number.isInteger(parsedCount) &&
     parsedCount >= countInfo.range_min &&
     parsedCount <= countInfo.range_max;
+  const countDirty =
+    countInfo !== null && count !== String(countInfo.episode_count);
 
   async function handleAnswers() {
     setError(null);
@@ -202,9 +209,12 @@ export function SeriesQuestionsPanel({
             <>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-xs text-muted-foreground">
+                  {unsavedAnswers
+                    ? `${unsavedAnswers} question${unsavedAnswers === 1 ? "" : "s"} with unsaved changes.`
+                    : "All question changes saved."}
                   {unanswered
-                    ? `${unanswered} unanswered question${unanswered === 1 ? "" : "s"} will auto-decide if left alone.`
-                    : "All questions answered."}
+                    ? " Unanswered questions auto-decide."
+                    : ""}
                 </p>
                 {!locked ? (
                   <Button
@@ -305,17 +315,24 @@ export function SeriesQuestionsPanel({
               </div>
 
               {!locked ? (
-                <Button
-                  onClick={handleAnswers}
-                  disabled={busy !== null}
-                >
-                  {busy === "answers" ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <Check className="size-4" />
-                  )}
-                  Save answers
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    onClick={handleAnswers}
+                    disabled={!unsavedAnswers || busy !== null}
+                  >
+                    {busy === "answers" ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Check className="size-4" />
+                    )}
+                    {unsavedAnswers ? "Save answers" : "Saved"}
+                  </Button>
+                  {!unsavedAnswers ? (
+                    <span className="text-xs text-muted-foreground">
+                      No unsaved changes
+                    </span>
+                  ) : null}
+                </div>
               ) : null}
             </>
           )}
@@ -374,14 +391,14 @@ export function SeriesQuestionsPanel({
                     variant="outline"
                     className="w-full"
                     onClick={handleCount}
-                    disabled={!countValid || busy !== null}
+                    disabled={!countValid || !countDirty || busy !== null}
                   >
                     {busy === "count" ? (
                       <Loader2 className="size-4 animate-spin" />
                     ) : (
                       <Check className="size-4" />
                     )}
-                    Save count
+                    {countDirty ? "Save count" : "Count saved"}
                   </Button>
                 ) : null}
               </>

@@ -10,6 +10,7 @@ import {
   Play,
   RefreshCw,
   RotateCcw,
+  X,
 } from "lucide-react";
 import { subscribeToRenderEvents } from "@repo/api-client";
 
@@ -34,13 +35,16 @@ import {
 } from "@/components/ui/table";
 import { API_BASE_URL, mediaUrl } from "@/lib/api";
 import {
+  type EpisodeRead,
   type RenderStatusRead,
   type SeriesState,
+  type StoryboardRead,
   formatDateTime,
   formatDuration,
   humanize,
   isSvgAsset,
   stateAtLeast,
+  tonePoster,
 } from "@/lib/series";
 
 type EpisodeRender = RenderStatusRead["episodes"][number];
@@ -74,6 +78,7 @@ function EpisodePlayer({ episode }: { episode: EpisodeRender }) {
   return (
     <video
       controls
+      autoPlay
       preload="metadata"
       className="w-full rounded-lg border"
       src={url}
@@ -85,7 +90,11 @@ function EpisodePlayer({ episode }: { episode: EpisodeRender }) {
 
 type Props = {
   seriesId: string;
+  seriesTitle: string;
+  tone: string;
   state: SeriesState;
+  episodes: EpisodeRead[];
+  storyboard: StoryboardRead | null;
   renderStatus: RenderStatusRead | null;
   busy: string | null;
   onStart: () => Promise<void>;
@@ -96,7 +105,11 @@ type Props = {
 
 export function SeriesRenderPanel({
   seriesId,
+  seriesTitle,
+  tone,
   state,
+  episodes,
+  storyboard,
   renderStatus,
   busy,
   onStart,
@@ -106,6 +119,9 @@ export function SeriesRenderPanel({
 }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [activeEpisode, setActiveEpisode] = useState<EpisodeRender | null>(
+    null,
+  );
 
   useEffect(() => {
     if (state !== "RENDERING") {
@@ -140,6 +156,19 @@ export function SeriesRenderPanel({
 
     return () => close?.();
   }, [onRefresh, onStatus, seriesId, state]);
+
+  useEffect(() => {
+    if (!activeEpisode) {
+      return;
+    }
+    function handleKey(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setActiveEpisode(null);
+      }
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [activeEpisode]);
 
   async function handleStart() {
     setError(null);
@@ -232,80 +261,225 @@ export function SeriesRenderPanel({
   const failedShots = renderStatus.shots.filter(
     (shot) => shot.status === "failed",
   );
+  const assembledCount = renderStatus.episodes.filter(
+    (episode) => episode.status === "assembled",
+  ).length;
+  const allAssembled =
+    renderStatus.episodes.length > 0 &&
+    assembledCount === renderStatus.episodes.length;
+  const releaseYear = new Date(
+    renderStatus.finished_at ?? new Date().toISOString(),
+  ).getFullYear();
+  const synopsis =
+    episodes[0]?.summary ??
+    "A short-form series built from the script, with every episode ending on a hook.";
+
+  function episodeMeta(episode: EpisodeRender) {
+    return episodes.find((entry) => entry.number === episode.episode_number);
+  }
+
+  function episodeThumbnail(episode: EpisodeRender) {
+    const board = storyboard?.episodes.find(
+      (entry) => entry.number === episode.episode_number,
+    );
+    const shots = board?.scenes.flatMap((scene) => scene.shots) ?? [];
+    return shots.find((shot) => shot.keyframe_url)?.keyframe_url ?? null;
+  }
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader className="flex flex-row items-start justify-between gap-3">
+    <div className="space-y-6">
+      {!allAssembled ? (
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between gap-3">
+            <div>
+              <CardTitle>Render queue</CardTitle>
+              <CardDescription>
+                Started {formatDateTime(renderStatus.started_at)}
+                {renderStatus.finished_at
+                  ? ` · Finished ${formatDateTime(renderStatus.finished_at)}`
+                  : ""}
+              </CardDescription>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline">{humanize(renderStatus.status)}</Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={busy !== null}
+              >
+                <RefreshCw className="size-4" />
+                Refresh
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {error ? (
+              <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+                <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                <p className="break-words">{error}</p>
+              </div>
+            ) : null}
+            {renderStatus.error ? (
+              <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+                <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                <p className="break-words">{renderStatus.error}</p>
+              </div>
+            ) : null}
+
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">
+                {
+                  renderStatus.shots.filter(
+                    (shot) => shot.status === "rendered",
+                  ).length
+                }
+                /{renderStatus.shot_count} shots · {assembledCount}/
+                {renderStatus.episode_count} episodes
+              </span>
+              <span className="font-mono">
+                {Math.round(renderStatus.progress * 100)}%
+              </span>
+            </div>
+            <Progress value={renderStatus.progress * 100} />
+
+            {failedShots.length ? (
+              <div className="flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
+                <AlertCircle className="size-4 shrink-0" />
+                {failedShots.length} shot{failedShots.length === 1 ? "" : "s"}{" "}
+                failed. Retry them individually below.
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : error ? (
+        <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+          <AlertCircle className="mt-0.5 size-4 shrink-0" />
+          <p className="break-words">{error}</p>
+        </div>
+      ) : null}
+
+      <section className="space-y-5">
+        <div>
+          <div className="flex flex-wrap items-baseline gap-3">
+            <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
+              Episodes
+            </h2>
+            <span className="h-5 w-px bg-border" />
+            <span className="text-lg text-muted-foreground md:text-xl">
+              {seriesTitle}
+            </span>
+          </div>
+          <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            {renderStatus.episode_count}-episode {tone} series
+          </p>
+          <p className="mt-4 text-xs font-semibold">
+            Release year: {releaseYear}
+          </p>
+          <p className="mt-1 line-clamp-3 max-w-3xl text-xs leading-relaxed text-muted-foreground">
+            {synopsis}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 xl:grid-cols-4">
+          {renderStatus.episodes.map((episode) => {
+            const meta = episodeMeta(episode);
+            const thumbnail = episodeThumbnail(episode);
+            const playable =
+              episode.status === "assembled" && episode.video_url !== null;
+
+            return (
+              <button
+                key={episode.episode_id}
+                type="button"
+                onClick={() => {
+                  if (playable) {
+                    setActiveEpisode(episode);
+                  }
+                }}
+                disabled={!playable}
+                className="group text-left disabled:cursor-default"
+              >
+                <div className="relative aspect-video overflow-hidden rounded-md bg-muted">
+                  {thumbnail ? (
+                    <Image
+                      src={mediaUrl(thumbnail)}
+                      alt={`Episode ${episode.episode_number} still`}
+                      fill
+                      unoptimized
+                      sizes="(max-width: 768px) 100vw, 25vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    />
+                  ) : (
+                    <div
+                      className="absolute inset-0 flex items-center justify-center"
+                      style={{ backgroundImage: tonePoster(tone) }}
+                    >
+                      <span className="text-4xl font-semibold text-white/70">
+                        {episode.episode_number}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-70 transition-opacity group-hover:opacity-100" />
+
+                  {playable ? (
+                    <span className="absolute inset-0 flex items-center justify-center">
+                      <span className="flex size-11 items-center justify-center rounded-full bg-white/90 text-black opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                        <Play className="ml-0.5 size-4 fill-current" />
+                      </span>
+                    </span>
+                  ) : (
+                    <Badge className="absolute left-2 top-2 border-0 bg-black/70 text-[10px] text-white">
+                      {humanize(episode.status)}
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="mt-2 flex items-start justify-between gap-3">
+                  <p className="line-clamp-1 text-xs font-medium">
+                    {episode.episode_number}.{" "}
+                    {meta?.title ?? `Episode ${episode.episode_number}`}
+                  </p>
+                  <span className="shrink-0 text-[11px] text-muted-foreground">
+                    {formatDuration(episode.duration_seconds)}
+                  </span>
+                </div>
+                <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
+                  {meta?.summary ??
+                    meta?.hook_description ??
+                    "This episode is being prepared."}
+                </p>
+                {episode.status === "failed" && episode.error ? (
+                  <p className="mt-1 line-clamp-2 text-[11px] text-destructive">
+                    {episode.error}
+                  </p>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <details
+        className="rounded-xl border bg-card"
+        open={failedShots.length > 0}
+      >
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4">
           <div>
-            <CardTitle>Render queue</CardTitle>
-            <CardDescription>
-              Started {formatDateTime(renderStatus.started_at)}
-              {renderStatus.finished_at
-                ? ` · Finished ${formatDateTime(renderStatus.finished_at)}`
-                : ""}
-            </CardDescription>
+            <p className="text-sm font-medium">Shot-by-shot status</p>
+            <p className="text-xs text-muted-foreground">
+              {
+                renderStatus.shots.filter(
+                  (shot) => shot.status === "rendered",
+                ).length
+              }
+              /{renderStatus.shot_count} rendered · attempts and failure reasons
+            </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline">{humanize(renderStatus.status)}</Badge>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={busy !== null}
-            >
-              <RefreshCw className="size-4" />
-              Refresh
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {error ? (
-            <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
-              <AlertCircle className="mt-0.5 size-4 shrink-0" />
-              <p className="break-words">{error}</p>
-            </div>
-          ) : null}
-          {renderStatus.error ? (
-            <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
-              <AlertCircle className="mt-0.5 size-4 shrink-0" />
-              <p className="break-words">{renderStatus.error}</p>
-            </div>
-          ) : null}
-
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">
-              {renderStatus.shots.filter((shot) => shot.status === "rendered").length}
-              /{renderStatus.shot_count} shots ·{" "}
-              {renderStatus.episodes.filter(
-                (episode) => episode.status === "assembled",
-              ).length}
-              /{renderStatus.episode_count} episodes
-            </span>
-            <span className="font-mono">
-              {Math.round(renderStatus.progress * 100)}%
-            </span>
-          </div>
-          <Progress value={renderStatus.progress * 100} />
-
-          {failedShots.length ? (
-            <div className="flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
-              <AlertCircle className="size-4 shrink-0" />
-              {failedShots.length} shot{failedShots.length === 1 ? "" : "s"}{" "}
-              failed. Retry them individually below.
-            </div>
-          ) : null}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Shots</CardTitle>
-          <CardDescription>
-            Per-shot render status, attempts, and failure reasons.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          <Badge variant="outline">{renderStatus.shots.length} shots</Badge>
+        </summary>
+        <div className="border-t p-4">
           <Table>
             <TableHeader>
               <TableRow>
@@ -372,49 +546,46 @@ export function SeriesRenderPanel({
               ))}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+        </div>
+      </details>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Episodes</CardTitle>
-          <CardDescription>
-            Assembled episodes are ready to play or download.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 xl:grid-cols-2">
-          {renderStatus.episodes.map((episode) => (
-            <div key={episode.episode_id} className="space-y-2">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium">
-                    Episode {episode.episode_number}
-                  </p>
-                  <Badge variant="outline">{humanize(episode.status)}</Badge>
-                </div>
-                <p className="text-[11px] text-muted-foreground">
-                  {formatDuration(episode.duration_seconds)}
+      {activeEpisode ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
+          onClick={() => setActiveEpisode(null)}
+        >
+          <div
+            className="w-full max-w-4xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-white">
+                  {activeEpisode.episode_number}.{" "}
+                  {episodeMeta(activeEpisode)?.title ??
+                    `Episode ${activeEpisode.episode_number}`}
+                </p>
+                <p className="mt-1 line-clamp-1 text-[11px] text-white/60">
+                  {formatDuration(activeEpisode.duration_seconds)} ·{" "}
+                  {episodeMeta(activeEpisode)?.summary ?? ""}
                 </p>
               </div>
-              <EpisodePlayer episode={episode} />
-              {episode.error ? (
-                <p className="text-xs text-destructive">{episode.error}</p>
-              ) : null}
-              {episode.status === "assembled" && episode.video_url ? (
-                <Button variant="outline" size="sm" asChild>
-                  <a
-                    href={mediaUrl(episode.video_url)}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Open asset
-                  </a>
-                </Button>
-              ) : null}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-white hover:bg-white/10 hover:text-white"
+                onClick={() => setActiveEpisode(null)}
+                aria-label="Close player"
+              >
+                <X className="size-5" />
+              </Button>
             </div>
-          ))}
-        </CardContent>
-      </Card>
+            <EpisodePlayer episode={activeEpisode} />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

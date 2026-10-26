@@ -55,11 +55,24 @@ type Props = {
   episodes: EpisodeRead[];
   validation: ValidationResult | null;
   busy: string | null;
-  onSaveEpisode: (episodeId: string, payload: EpisodeUpdate) => Promise<void>;
+  onSaveEpisodes: (
+    updates: { episodeId: string; payload: EpisodeUpdate }[],
+  ) => Promise<void>;
   onValidate: () => Promise<void>;
   onPlan: () => Promise<void>;
   onGoQuestions: () => void;
 };
+
+function isDraftDirty(draft: Draft, episode: EpisodeRead) {
+  const saved = draftFromEpisode(episode);
+  return (
+    draft.title !== saved.title ||
+    draft.summary !== saved.summary ||
+    draft.ending_type !== saved.ending_type ||
+    draft.hook_type !== saved.hook_type ||
+    draft.hook_description !== saved.hook_description
+  );
+}
 
 function draftFromEpisode(episode: EpisodeRead): Draft {
   return {
@@ -76,13 +89,12 @@ export function SeriesEpisodesPanel({
   episodes,
   validation,
   busy,
-  onSaveEpisode,
+  onSaveEpisodes,
   onValidate,
   onPlan,
   onGoQuestions,
 }: Props) {
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
-  const [savingId, setSavingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const locked = stateAtLeast(state, "BIBLE_LOCKED");
 
@@ -107,36 +119,52 @@ export function SeriesEpisodesPanel({
     });
   }
 
-  async function handleSave(episode: EpisodeRead) {
+  const dirtyEpisodes = episodes.filter((episode) => {
     const draft = drafts[episode.id];
-    if (!draft) {
+    return draft ? isDraftDirty(draft, episode) : false;
+  });
+
+  async function handleSaveAll() {
+    if (!dirtyEpisodes.length) {
       return;
     }
-    if (!draft.title.trim() || !draft.summary.trim()) {
+    if (
+      dirtyEpisodes.some((episode) => {
+        const draft = drafts[episode.id];
+        return !draft || !draft.title.trim() || !draft.summary.trim();
+      })
+    ) {
       setError("Every episode needs a title and summary.");
       return;
     }
 
     setError(null);
-    setSavingId(episode.id);
     try {
-      await onSaveEpisode(episode.id, {
-        title: draft.title.trim(),
-        summary: draft.summary.trim(),
-        ending_type: draft.ending_type,
-        hook_type:
-          draft.ending_type === "conclusion" || !draft.hook_type
-            ? null
-            : (draft.hook_type as NonNullable<EpisodeUpdate["hook_type"]>),
-        hook_description:
-          draft.ending_type === "conclusion"
-            ? null
-            : draft.hook_description.trim() || null,
-      });
+      await onSaveEpisodes(
+        dirtyEpisodes.map((episode) => {
+          const draft = drafts[episode.id]!;
+          return {
+            episodeId: episode.id,
+            payload: {
+              title: draft.title.trim(),
+              summary: draft.summary.trim(),
+              ending_type: draft.ending_type,
+              hook_type:
+                draft.ending_type === "conclusion" || !draft.hook_type
+                  ? null
+                  : (draft.hook_type as NonNullable<
+                      EpisodeUpdate["hook_type"]
+                    >),
+              hook_description:
+                draft.ending_type === "conclusion"
+                  ? null
+                  : draft.hook_description.trim() || null,
+            },
+          };
+        }),
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save episode.");
-    } finally {
-      setSavingId(null);
+      setError(err instanceof Error ? err.message : "Could not save episodes.");
     }
   }
 
@@ -261,6 +289,44 @@ export function SeriesEpisodesPanel({
             </p>
           ) : null}
 
+          {!locked ? (
+            <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2 text-xs">
+                {dirtyEpisodes.length ? (
+                  <>
+                    <AlertCircle className="size-4 text-amber-600 dark:text-amber-400" />
+                    <span className="font-medium">
+                      {dirtyEpisodes.length} episode
+                      {dirtyEpisodes.length === 1 ? "" : "s"} with unsaved
+                      changes
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="size-4 text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-muted-foreground">
+                      All episode changes saved
+                    </span>
+                  </>
+                )}
+              </div>
+              <Button
+                size="sm"
+                onClick={handleSaveAll}
+                disabled={!dirtyEpisodes.length || busy !== null}
+              >
+                {busy === "episodes" ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Check className="size-4" />
+                )}
+                {dirtyEpisodes.length
+                  ? `Save ${dirtyEpisodes.length === 1 ? "episode" : "all episodes"}`
+                  : "Saved"}
+              </Button>
+            </div>
+          ) : null}
+
           {validation ? (
             validation.valid ? (
               <div className="flex items-start gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-3 text-xs text-emerald-700 dark:text-emerald-300">
@@ -311,6 +377,11 @@ export function SeriesEpisodesPanel({
                 </CardDescription>
               </div>
               <div className="flex flex-wrap items-center gap-2">
+                {draft && isDraftDirty(draft, episode) && !locked ? (
+                  <Badge variant="outline" className="border-amber-500/50 text-amber-700 dark:text-amber-300">
+                    Unsaved
+                  </Badge>
+                ) : null}
                 <Badge
                   variant={
                     draft.ending_type === "conclusion"
@@ -320,20 +391,6 @@ export function SeriesEpisodesPanel({
                 >
                   {humanize(draft.ending_type)}
                 </Badge>
-                {!locked ? (
-                  <Button
-                    size="sm"
-                    onClick={() => handleSave(episode)}
-                    disabled={savingId !== null || busy !== null}
-                  >
-                    {savingId === episode.id ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <Check className="size-4" />
-                    )}
-                    Save
-                  </Button>
-                ) : null}
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
